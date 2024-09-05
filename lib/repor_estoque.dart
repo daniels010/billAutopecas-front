@@ -10,6 +10,7 @@ class _ReporEstoqueScreenState extends State<ReporEstoqueScreen> {
   final _codigoController = TextEditingController();
   final _quantidadeController = TextEditingController();
   String _mensagem = '';
+  bool _estoqueRepostoComSucesso = false; // Controla a cor do card
 
   Future<void> reporEstoque() async {
     final codigo = _codigoController.text.toUpperCase();
@@ -18,6 +19,7 @@ class _ReporEstoqueScreenState extends State<ReporEstoqueScreen> {
     if (codigo.isEmpty || quantidade <= 0) {
       setState(() {
         _mensagem = 'Código ou quantidade inválidos.';
+        _estoqueRepostoComSucesso = false; // Erro nos dados
       });
       return;
     }
@@ -26,19 +28,18 @@ class _ReporEstoqueScreenState extends State<ReporEstoqueScreen> {
         'http://localhost:8080/produtos/repor-estoque?codigo=$codigo&quantidade=$quantidade';
     final response = await http.post(Uri.parse(url));
 
-    if (response.statusCode == 200) {
-      setState(() {
+    setState(() {
+      if (response.statusCode == 200) {
         _mensagem = 'Estoque reposto com sucesso.';
-      });
-    } else if (response.statusCode == 400) {
-      setState(() {
+        _estoqueRepostoComSucesso = true; // Sucesso
+      } else if (response.statusCode == 400) {
         _mensagem = 'Dados inválidos. Verifique o código e a quantidade.';
-      });
-    } else {
-      setState(() {
+        _estoqueRepostoComSucesso = false; // Erro nos dados
+      } else {
         _mensagem = 'Erro ao repor estoque.';
-      });
-    }
+        _estoqueRepostoComSucesso = false; // Outro erro
+      }
+    });
   }
 
   @override
@@ -51,38 +52,71 @@ class _ReporEstoqueScreenState extends State<ReporEstoqueScreen> {
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
             children: <Widget>[
-              TextField(
-                controller: _codigoController,
-                decoration: InputDecoration(labelText: 'Código'),
-              ),
-              TextField(
-                controller: _quantidadeController,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(labelText: 'Quantidade'),
-              ),
-              SizedBox(height: 16.0),
-              ElevatedButton(
-                onPressed: reporEstoque,
-                child: Text('Repor Estoque'),
-              ),
-              SizedBox(height: 16.0),
-              _mensagem.isNotEmpty
-                  ? Card(
-                      elevation: 5,
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Text(
-                          _mensagem,
-                          style: TextStyle(fontSize: 16),
-                          textAlign:
-                              TextAlign.left, // Justifica o texto à esquerda
-                        ),
+              Spacer(flex: 2), // Espaço acima
+              SizedBox(
+                width: 300,
+                child: Column(
+                  children: [
+                    TextField(
+                      controller: _codigoController,
+                      decoration: InputDecoration(
+                        labelText: 'Código do Produto',
+                        border: OutlineInputBorder(),
                       ),
-                    )
-                  : Container(),
+                    ),
+                    SizedBox(height: 16.0),
+                    TextField(
+                      controller: _quantidadeController,
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(
+                        labelText: 'Quantidade',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    SizedBox(height: 16.0),
+                    SizedBox(
+                      width: 150,
+                      child: ElevatedButton(
+                        onPressed: reporEstoque,
+                        child: Text('Repor Estoque'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: 16.0),
+              Expanded(
+                flex: 2,
+                child: _mensagem.isNotEmpty
+                    ? Align(
+                        alignment: Alignment.center,
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(maxWidth: 300),
+                          child: Card(
+                            elevation: 5,
+                            color: _estoqueRepostoComSucesso
+                                ? Colors.white // Sucesso - cor padrão
+                                : Color(0xFFE1BEE7), // Falha - cor roxa clara
+                            child: Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: SingleChildScrollView(
+                                child: Text(
+                                  _mensagem,
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.black,
+                                  ),
+                                  textAlign: TextAlign.left,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      )
+                    : Container(),
+              ),
+              Spacer(flex: 2), // Espaço abaixo
             ],
           ),
         ),

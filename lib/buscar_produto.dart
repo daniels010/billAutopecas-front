@@ -10,6 +10,7 @@ class SearchProductScreen extends StatefulWidget {
 class _SearchProductScreenState extends State<SearchProductScreen> {
   final _codigoController = TextEditingController();
   String _resultado = '';
+  bool _produtoEncontrado = false; // Para controlar se o produto foi encontrado
 
   Future<void> buscarProduto() async {
     final codigo = _codigoController.text.toUpperCase();
@@ -17,6 +18,7 @@ class _SearchProductScreenState extends State<SearchProductScreen> {
     if (codigo.isEmpty) {
       setState(() {
         _resultado = 'Digite o código do produto.';
+        _produtoEncontrado = false;
       });
       return;
     }
@@ -29,14 +31,17 @@ class _SearchProductScreenState extends State<SearchProductScreen> {
       setState(() {
         _resultado =
             'Produto encontrado:\nCódigo: ${produto['codigo']}\nDescrição: ${produto['descricao']}\nMarca: ${produto['marca']}\nValor de Entrada: ${produto['valorEntrada']}\nValor de Saída: ${produto['valorSaida']}\nQuantidade Atual: ${produto['quantidadeAtual']}';
+        _produtoEncontrado = true; // Produto foi encontrado
       });
     } else if (response.statusCode == 404) {
       setState(() {
         _resultado = 'Produto não encontrado.';
+        _produtoEncontrado = false; // Produto não encontrado
       });
     } else {
       setState(() {
         _resultado = 'Erro ao buscar produto.';
+        _produtoEncontrado = false; // Produto não encontrado devido ao erro
       });
     }
   }
@@ -59,7 +64,10 @@ class _SearchProductScreenState extends State<SearchProductScreen> {
                   children: [
                     TextField(
                       controller: _codigoController,
-                      decoration: InputDecoration(labelText: 'Código'),
+                      decoration: InputDecoration(
+                        labelText: 'Código do Produto',
+                        border: OutlineInputBorder(), // Borda como caixa
+                      ),
                       textAlign: TextAlign.center,
                     ),
                     SizedBox(height: 16.0),
@@ -84,14 +92,18 @@ class _SearchProductScreenState extends State<SearchProductScreen> {
                               maxWidth: 300), // Limita a largura do card
                           child: Card(
                             elevation: 5,
+                            color: _produtoEncontrado
+                                ? Colors
+                                    .white // Cor do card quando o produto é encontrado
+                                : Color(
+                                    0xFFE1BEE7), // Cor roxa clara quando não encontra
                             child: Padding(
                               padding: const EdgeInsets.all(16.0),
                               child: SingleChildScrollView(
                                 child: Text(
                                   _resultado,
                                   style: TextStyle(fontSize: 16),
-                                  textAlign: TextAlign
-                                      .left, // Alinha o texto à esquerda
+                                  textAlign: TextAlign.left,
                                 ),
                               ),
                             ),

@@ -15,6 +15,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
   final _valorSaidaController = TextEditingController();
   final _quantidadeAtualController = TextEditingController();
   String _mensagem = '';
+  bool _produtoAdicionadoComSucesso = false; // Controla a cor do card
 
   Future<void> adicionarProduto() async {
     final url = 'http://localhost:8080/produtos/adicionar';
@@ -32,23 +33,21 @@ class _AddProductScreenState extends State<AddProductScreen> {
       }),
     );
 
-    if (response.statusCode == 201) {
-      setState(() {
+    setState(() {
+      if (response.statusCode == 201) {
         _mensagem = 'Produto adicionado com sucesso';
-      });
-    } else if (response.statusCode == 400) {
-      setState(() {
+        _produtoAdicionadoComSucesso = true; // Produto adicionado com sucesso
+      } else if (response.statusCode == 400) {
         _mensagem = 'Dados inválidos: ${response.body}';
-      });
-    } else if (response.statusCode == 409) {
-      setState(() {
+        _produtoAdicionadoComSucesso = false; // Erro nos dados
+      } else if (response.statusCode == 409) {
         _mensagem = 'Produto já existe';
-      });
-    } else {
-      setState(() {
+        _produtoAdicionadoComSucesso = false; // Produto duplicado
+      } else {
         _mensagem = 'Erro ao adicionar produto';
-      });
-    }
+        _produtoAdicionadoComSucesso = false; // Outro erro
+      }
+    });
   }
 
   @override
@@ -66,48 +65,64 @@ class _AddProductScreenState extends State<AddProductScreen> {
               Align(
                 alignment: Alignment.center,
                 child: SizedBox(
-                  width: 300, // Largura do campo de texto
+                  width: 300, // Largura dos campos de texto
                   child: Column(
                     children: [
                       TextField(
                         controller: _codigoController,
-                        decoration: InputDecoration(labelText: 'Código'),
+                        decoration: InputDecoration(
+                          labelText: 'Código',
+                          border:
+                              OutlineInputBorder(), // Borda nas caixas de texto
+                        ),
                         textAlign: TextAlign.center,
                       ),
                       SizedBox(height: 16.0),
                       TextField(
                         controller: _descricaoController,
-                        decoration: InputDecoration(labelText: 'Descrição'),
+                        decoration: InputDecoration(
+                          labelText: 'Descrição',
+                          border: OutlineInputBorder(),
+                        ),
                         textAlign: TextAlign.center,
                       ),
                       SizedBox(height: 16.0),
                       TextField(
                         controller: _marcaController,
-                        decoration: InputDecoration(labelText: 'Marca'),
+                        decoration: InputDecoration(
+                          labelText: 'Marca',
+                          border: OutlineInputBorder(),
+                        ),
                         textAlign: TextAlign.center,
                       ),
                       SizedBox(height: 16.0),
                       TextField(
                         controller: _valorEntradaController,
                         keyboardType: TextInputType.number,
-                        decoration:
-                            InputDecoration(labelText: 'Valor de Entrada'),
+                        decoration: InputDecoration(
+                          labelText: 'Valor de Entrada',
+                          border: OutlineInputBorder(),
+                        ),
                         textAlign: TextAlign.center,
                       ),
                       SizedBox(height: 16.0),
                       TextField(
                         controller: _valorSaidaController,
                         keyboardType: TextInputType.number,
-                        decoration:
-                            InputDecoration(labelText: 'Valor de Saída'),
+                        decoration: InputDecoration(
+                          labelText: 'Valor de Saída',
+                          border: OutlineInputBorder(),
+                        ),
                         textAlign: TextAlign.center,
                       ),
                       SizedBox(height: 16.0),
                       TextField(
                         controller: _quantidadeAtualController,
                         keyboardType: TextInputType.number,
-                        decoration:
-                            InputDecoration(labelText: 'Quantidade Atual'),
+                        decoration: InputDecoration(
+                          labelText: 'Quantidade Atual',
+                          border: OutlineInputBorder(),
+                        ),
                         textAlign: TextAlign.center,
                       ),
                     ],
@@ -136,6 +151,10 @@ class _AddProductScreenState extends State<AddProductScreen> {
                               maxWidth: 300), // Limita a largura do card
                           child: Card(
                             elevation: 5,
+                            color: _produtoAdicionadoComSucesso
+                                ? Colors.white // Cor padrão para sucesso
+                                : Color(
+                                    0xFFE1BEE7), // Cor roxa clara para erros
                             child: Padding(
                               padding: const EdgeInsets.all(16.0),
                               child: Text(

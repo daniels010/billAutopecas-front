@@ -7,7 +7,9 @@ class VendasScreen extends StatefulWidget {
 }
 
 class _VendasScreenState extends State<VendasScreen> {
-  String _relatorioVendas = "Carregando...";
+  String _relatorioVendas = '';
+  bool _isLoading = true;
+  String _mensagem = '';
 
   @override
   void initState() {
@@ -23,19 +25,23 @@ class _VendasScreenState extends State<VendasScreen> {
       if (response.statusCode == 200) {
         setState(() {
           _relatorioVendas = response.body;
+          _isLoading = false;
         });
       } else if (response.statusCode == 404) {
         setState(() {
-          _relatorioVendas = "Nenhuma venda registrada.";
+          _mensagem = "Nenhuma venda registrada.";
+          _isLoading = false;
         });
       } else {
         setState(() {
-          _relatorioVendas = "Erro ao buscar relatório de vendas.";
+          _mensagem = "Erro ao buscar relatório de vendas.";
+          _isLoading = false;
         });
       }
     } catch (e) {
       setState(() {
-        _relatorioVendas = "Erro ao se conectar com o servidor.";
+        _mensagem = "Erro ao se conectar com o servidor.";
+        _isLoading = false;
       });
     }
   }
@@ -48,10 +54,37 @@ class _VendasScreenState extends State<VendasScreen> {
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: SingleChildScrollView(
-          child: Text(
-            _relatorioVendas,
-            style: TextStyle(fontSize: 16.0),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              _isLoading
+                  ? CircularProgressIndicator() // Mostra o carregando enquanto busca
+                  : _relatorioVendas.isNotEmpty || _mensagem.isNotEmpty
+                      ? Container(
+                          width: 700, // Largura fixa para os cards
+                          margin: EdgeInsets.symmetric(vertical: 8),
+                          child: Card(
+                            elevation: 5,
+                            child: Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: Align(
+                                alignment: Alignment
+                                    .topLeft, // Alinha o texto à esquerda
+                                child: Text(
+                                  _relatorioVendas.isNotEmpty
+                                      ? _relatorioVendas
+                                      : _mensagem,
+                                  style: TextStyle(fontSize: 16.0),
+                                  textAlign: TextAlign
+                                      .left, // Alinha o texto à esquerda
+                                ),
+                              ),
+                            ),
+                          ),
+                        )
+                      : Container(), // Em caso de ausência de dados
+            ],
           ),
         ),
       ),

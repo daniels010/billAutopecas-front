@@ -7,7 +7,9 @@ class RelatorioEstoqueScreen extends StatefulWidget {
 }
 
 class _RelatorioEstoqueScreenState extends State<RelatorioEstoqueScreen> {
-  String _relatorio = "Carregando...";
+  String _relatorio = '';
+  bool _isLoading = true;
+  String _mensagem = '';
 
   @override
   void initState() {
@@ -23,19 +25,23 @@ class _RelatorioEstoqueScreenState extends State<RelatorioEstoqueScreen> {
       if (response.statusCode == 200) {
         setState(() {
           _relatorio = response.body;
+          _isLoading = false;
         });
       } else if (response.statusCode == 404) {
         setState(() {
-          _relatorio = 'Nenhum produto em estoque';
+          _mensagem = 'Nenhum produto em estoque';
+          _isLoading = false;
         });
       } else {
         setState(() {
-          _relatorio = 'Erro ao buscar o relatório de estoque';
+          _mensagem = 'Erro ao buscar o relatório de estoque';
+          _isLoading = false;
         });
       }
     } catch (e) {
       setState(() {
-        _relatorio = 'Erro ao conectar com o servidor';
+        _mensagem = 'Erro ao conectar com o servidor';
+        _isLoading = false;
       });
     }
   }
@@ -48,10 +54,37 @@ class _RelatorioEstoqueScreenState extends State<RelatorioEstoqueScreen> {
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: SingleChildScrollView(
-          child: Text(
-            _relatorio,
-            style: TextStyle(fontSize: 16.0),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              _isLoading
+                  ? CircularProgressIndicator() // Mostra o carregando enquanto busca
+                  : _relatorio.isNotEmpty || _mensagem.isNotEmpty
+                      ? Container(
+                          width: 600, // Largura fixa para os cards
+                          margin: EdgeInsets.symmetric(vertical: 8),
+                          child: Card(
+                            elevation: 5,
+                            child: Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: Align(
+                                alignment: Alignment
+                                    .topLeft, // Alinha o texto à esquerda
+                                child: Text(
+                                  _relatorio.isNotEmpty
+                                      ? _relatorio
+                                      : _mensagem,
+                                  style: TextStyle(fontSize: 16.0),
+                                  textAlign: TextAlign
+                                      .left, // Alinha o texto à esquerda
+                                ),
+                              ),
+                            ),
+                          ),
+                        )
+                      : Container(), // Em caso de ausência de dados
+            ],
           ),
         ),
       ),

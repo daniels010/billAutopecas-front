@@ -9,25 +9,38 @@ class ListarProdutosScreen extends StatefulWidget {
 class _ListarProdutosScreenState extends State<ListarProdutosScreen> {
   List<dynamic> _produtos = [];
   String _mensagem = '';
+  bool _isLoading = true;
 
   Future<void> listarProdutos() async {
     final url = 'http://localhost:8080/produtos/todos';
 
-    final response = await http.get(Uri.parse(url));
+    try {
+      final response = await http.get(Uri.parse(url));
 
-    if (response.statusCode == 200) {
+      if (response.statusCode == 200) {
+        setState(() {
+          _produtos = response.body
+              .split("\n")
+              .where((item) => item.isNotEmpty)
+              .toList();
+          _mensagem = ''; // Limpa mensagem se produtos foram carregados
+          _isLoading = false;
+        });
+      } else if (response.statusCode == 404) {
+        setState(() {
+          _mensagem = 'Nenhum produto encontrado.';
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _mensagem = 'Erro ao buscar produtos.';
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
       setState(() {
-        _produtos =
-            response.body.split("\n").where((item) => item.isNotEmpty).toList();
-        _mensagem = ''; // Limpa mensagem se produtos foram carregados
-      });
-    } else if (response.statusCode == 404) {
-      setState(() {
-        _mensagem = 'Nenhum produto encontrado.';
-      });
-    } else {
-      setState(() {
-        _mensagem = 'Erro ao buscar produtos.';
+        _mensagem = 'Erro ao conectar com o servidor.';
+        _isLoading = false;
       });
     }
   }
@@ -44,46 +57,57 @@ class _ListarProdutosScreenState extends State<ListarProdutosScreen> {
       appBar: AppBar(
         title: Text('Listar Produtos'),
       ),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Center(
           child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
-              Expanded(
-                child: _produtos.isNotEmpty
-                    ? Align(
-                        alignment: Alignment.topCenter,
-                        child: SingleChildScrollView(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: _produtos.map((produto) {
-                              return ConstrainedBox(
-                                constraints: BoxConstraints(
-                                  minWidth:
-                                      300, // Largura mínima para uniformidade
-                                  maxWidth: 300, // Largura máxima para os cards
-                                ),
+              _isLoading
+                  ? CircularProgressIndicator() // Mostra um loading enquanto busca
+                  : Expanded(
+                      child: SingleChildScrollView(
+                        child: Column(
+                          children: <Widget>[
+                            if (_produtos.isNotEmpty)
+                              ..._produtos.map((produto) {
+                                return Container(
+                                  width: 220, // Largura fixa para os cards
+                                  margin: EdgeInsets.symmetric(vertical: 8),
+                                  child: Card(
+                                    elevation: 5,
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(16.0),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: _formatarProduto(produto),
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            if (_mensagem.isNotEmpty)
+                              Container(
+                                width:
+                                    250, // Largura fixa para o card de mensagem
+                                margin: EdgeInsets.symmetric(vertical: 8),
                                 child: Card(
                                   elevation: 5,
-                                  margin: EdgeInsets.symmetric(vertical: 8),
                                   child: Padding(
                                     padding: const EdgeInsets.all(16.0),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: _formatarProduto(produto),
+                                    child: Text(
+                                      _mensagem,
+                                      style: TextStyle(fontSize: 16),
+                                      textAlign: TextAlign.center,
                                     ),
                                   ),
                                 ),
-                              );
-                            }).toList(),
-                          ),
+                              ),
+                          ],
                         ),
-                      )
-                    : _mensagem.isNotEmpty
-                        ? Text(_mensagem, style: TextStyle(fontSize: 16))
-                        : CircularProgressIndicator(), // Mostra um loading enquanto busca
-              ),
+                      ),
+                    ),
             ],
           ),
         ),
